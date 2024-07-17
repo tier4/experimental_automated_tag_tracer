@@ -1,9 +1,9 @@
 import yaml
 import re, os
 from packaging import version
+import git
 from github import Github, Repository
 from github.Repository import Repository
-import subprocess
 
 class AutowareRepos:
     """
@@ -108,16 +108,29 @@ def get_latest_tag(tags: list[str], current_version: str) -> str:
 
 def create_branch_with_new_version(url:str, repo_name: str, latest_tag: str, autoware_repos: AutowareRepos) -> None:
     # create a new branch
-    subprocess.run(["git", "switch", "-c", f"feat/update-{repo_name}"])
+    repo = git.Repo("./")
+    new_branch_name = f"feat/update-{repo_name}"
+
+    # check if the branch already exists
+    if new_branch_name in repo.heads:
+        print(f"Branch '{new_branch_name}' already exists.")
+    else:
+        # create a new branch and checkout
+        new_branch = repo.create_head(new_branch_name)
+        new_branch.checkout()
+        print(f"Switched to new branch '{new_branch_name}'")
 
     # change version in autoware.repos
     autoware_repos.update_repository_version(url, latest_tag)
+
     # add
-    subprocess.run(["git", "add", "autoware.repos"])
+    repo.index.add(['autoware.repos'])
     # commit
-    subprocess.run(["git", "commit", "-s", "-m", f"feat(autoware.repos): update {repo_name} to {latest_tag}"])
+    commit_message = f"feat(autoware.repos): update {repo_name} to {latest_tag}"
+    repo.git.commit(m=commit_message, s=True)
     # push
-    subprocess.run(["git", "push", "origin", f"feat/update-{repo_name}"])
+    origin = repo.remote(name='origin')
+    origin.push(new_branch_name)
 
 def create_version_update_pr():
     autoware_repos: AutowareRepos = AutowareRepos(autoware_repos_path = "./autoware.repos")
