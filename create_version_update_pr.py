@@ -132,6 +132,11 @@ def create_branch_with_new_version(url:str, repo_name: str, latest_tag: str, aut
     origin = repo.remote(name='origin')
     origin.push(new_branch_name)
 
+    # switch to main branch
+    main_branch_name = "main"
+    main_branch = repo.heads[main_branch_name]
+    main_branch.checkout()
+
 def create_version_update_pr():
     autoware_repos: AutowareRepos = AutowareRepos(autoware_repos_path = "./autoware.repos")
     repository_url_semantic_version_dict: dict[str, str] = autoware_repos.pickup_semver_respositories(semantic_version_pattern = r'(v\d+\.\d+\.\d+)')
