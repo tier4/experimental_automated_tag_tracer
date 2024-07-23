@@ -141,6 +141,9 @@ def create_version_update_pr():
     autoware_repos: AutowareRepos = AutowareRepos(autoware_repos_path = "./autoware.repos")
     repository_url_semantic_version_dict: dict[str, str] = autoware_repos.pickup_semver_respositories(semantic_version_pattern = r'(v\d+\.\d+\.\d+)')
 
+    github_token: str = os.getenv("GITHUB_TOKEN", default=None)
+    if github_token is None:
+        raise ValueError("Please set GITHUB_TOKEN as an environment variable")
     github_interface = GitHubInterface(token = os.getenv("GITHUB_TOKEN"))
 
     # autoware_repo_name = "autowarefoundation/autoware"
