@@ -169,5 +169,16 @@ def create_version_update_pr():
                 base = autoware_base_branch
             )
 
+            reset_repository_state(autoware_base_branch)
+
+def reset_repository_state(base_branch: str):
+    repo = git.Repo("./")
+    # Checkout the base branch
+    repo.git.checkout(base_branch)
+    # Reset any changes
+    repo.git.reset('--hard', f'origin/{base_branch}')
+    # Clean untracked files
+    repo.git.clean('-fd')
+
 if __name__ == "__main__":
     create_version_update_pr()
