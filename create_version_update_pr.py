@@ -152,6 +152,9 @@ def create_version_update_pr():
 
     for url, current_version in repository_url_semantic_version_dict.items():
 
+        if "dummy" in url:
+            continue
+
         # get tags of the repository
         tags: list[str] = github_interface.repository_tags(url)
 
