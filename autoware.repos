@@ -38,7 +38,7 @@ repositories:
   dummy/dummy_autoware_packages:
     type: git
     url: https://github.com/Shin-kyoto/dummy_autoware_packages.git
-    version: v0.0.1
+    version: v0.0.2
   launcher/autoware_launch:
     type: git
     url: https://github.com/autowarefoundation/autoware_launch.git
