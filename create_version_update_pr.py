@@ -26,7 +26,7 @@ args_repo.add_argument("--semantic_version_pattern", type=str, default=r'(v\d+\.
 
 # For the Autoware
 args_aw = parser.add_argument_group("Autoware")
-args_aw.add_argument("--autoware_repos_path", type=str, default="./autoware.repos", help="The path to autoware.repos")
+args_aw.add_argument("--autoware_repos_file_name", type=str, default="autoware.repos", help="The path to autoware.repos")
 
 args = parser.parse_args()
 
@@ -48,12 +48,12 @@ class AutowareRepos:
     This class gets information from autoware.repos and updates it
 
     Attributes:
-        autoware_repos_path (str): the path to autoware.repos. e.g. "./autoware.repos"
+        autoware_repos_file_name (str): the path to autoware.repos. e.g. "./autoware.repos"
         autoware_repos (dict): the content of autoware.repos
     """
-    def __init__(self, autoware_repos_path: str):
-        self.autoware_repos_path: str = autoware_repos_path
-        with open(self.autoware_repos_path, "r") as file:
+    def __init__(self, autoware_repos_file_name: str):
+        self.autoware_repos_file_name: str = autoware_repos_file_name
+        with open(self.autoware_repos_file_name, "r") as file:
             self.autoware_repos = yaml.safe_load(file)
 
     def _parse_repos(self) -> dict[str, str]:
@@ -103,7 +103,7 @@ class AutowareRepos:
 
         self.autoware_repos["repositories"][target_repository_relative_path]["version"] = new_version
 
-        with open(self.autoware_repos_path, "w") as file:
+        with open(self.autoware_repos_file_name, "w") as file:
             yaml.safe_dump(self.autoware_repos, file)
 
 
@@ -171,7 +171,7 @@ def create_version_update_pr(args: argparse.Namespace) -> None:
         raise ValueError("Please set GITHUB_TOKEN as an environment variable")
     github_interface = GitHubInterface(token = github_token)
 
-    autoware_repos: AutowareRepos = AutowareRepos(autoware_repos_path = args.autoware_repos_path)
+    autoware_repos: AutowareRepos = AutowareRepos(autoware_repos_file_name = args.autoware_repos_file_name)
 
     # Get the repositories with semantic version tags
     repository_url_semantic_version_dict: dict[str, str] = autoware_repos.pickup_semver_respositories(semantic_version_pattern = args.semantic_version_pattern)
@@ -217,7 +217,7 @@ def create_version_update_pr(args: argparse.Namespace) -> None:
                 autoware_repos.update_repository_version(url, latest_tag)
 
                 # Add
-                repo.index.add([args.autoware_repos_path])
+                repo.index.add([args.autoware_repos_file_name])
 
                 # Commit
                 commit_message = f"feat(autoware.repos): update {repo_name} to {latest_tag}"
@@ -244,18 +244,24 @@ def create_version_update_pr(args: argparse.Namespace) -> None:
                 repo.heads[args.base_branch].checkout()
 
                 # Clean up if the branch looks created by this script
-                #if newly_created:
-                #    # Delete the branch if the PR creation failed
-                #    repo.delete_head(branch_name, force=True)
-                #    logger.info(f"Deleted branch {branch_name}")
+                if newly_created:
+                    # Delete the branch if the PR creation failed
+                    repo.delete_head(branch_name, force=True)
+                    logger.info(f"Deleted branch {branch_name}")
 
             finally:
 
                 # Switch back to base branch
                 repo.heads[args.base_branch].checkout()
 
+                # Reset any changes
+                repo.git.reset('--hard', f'origin/{args.base_branch}')
+
+                # Clean untracked files
+                repo.git.clean('-fd')
+
                 # Restore base's autoware.repos
-                autoware_repos: AutowareRepos = AutowareRepos(autoware_repos_path = args.autoware_repos_path)
+                autoware_repos: AutowareRepos = AutowareRepos(autoware_repos_file_name = args.autoware_repos_file_name)
         else:
             logger.debug(f"Repository {url} has the latest version {current_version}. Skip for this repository.")
 
