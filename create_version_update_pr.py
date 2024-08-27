@@ -176,6 +176,18 @@ def create_version_update_pr(args: argparse.Namespace) -> None:
     # Get the repositories with semantic version tags
     repository_url_semantic_version_dict: dict[str, str] = autoware_repos.pickup_semver_respositories(semantic_version_pattern = args.semantic_version_pattern)
 
+    # Get reference to the repository
+    repo = git.Repo(args.parent_dir)
+
+    # Remote branches
+    branches = []
+    for ref in repo.references:
+        if isinstance(ref, git.refs.remote.RemoteReference):
+            # Remove the 'origin/' prefix
+            branch_name = ref.name.split('/', 1)[1]
+            if branch_name not in branches:
+                branches.append(branch_name)
+
     for url, current_version in repository_url_semantic_version_dict.items():
         '''
         Description:
@@ -189,9 +201,6 @@ def create_version_update_pr(args: argparse.Namespace) -> None:
                 6. Commit and push
                 7. Create a PR
         '''
-
-        # Get reference to the repository
-        repo = git.Repo(args.parent_dir)
 
         # get tags of the repository
         tags: list[str] = github_interface.get_tags_by_url(url)
@@ -207,8 +216,8 @@ def create_version_update_pr(args: argparse.Namespace) -> None:
             branch_name: str = f"{args.new_branch_prefix}{repo_name}"
 
             # Check if the remote branch already exists
-            if branch_name in repo.remotes.origin.refs:
-                logger.info(f"Branch '{branch_name}' already exists.")
+            if branch_name in branches:
+                logger.info(f"Branch '{branch_name}' already exists on the remote.")
                 continue
 
             # First, create a branch
