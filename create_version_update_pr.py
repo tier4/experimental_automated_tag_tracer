@@ -206,6 +206,11 @@ def create_version_update_pr(args: argparse.Namespace) -> None:
             # Set branch name
             branch_name: str = f"{args.new_branch_prefix}{repo_name}"
 
+            # Check if the remote branch already exists
+            if branch_name in repo.remotes.origin.refs:
+                logger.info(f"Branch '{branch_name}' already exists.")
+                continue
+
             # First, create a branch
             newly_created: bool = create_one_branch(repo, branch_name)
 
