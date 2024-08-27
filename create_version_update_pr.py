@@ -213,7 +213,7 @@ def create_version_update_pr(args: argparse.Namespace) -> None:
             repo_name: str = github_interface.url_to_repository_name(url)
 
             # Set branch name
-            branch_name: str = f"{args.new_branch_prefix}{repo_name}"
+            branch_name: str = f"{args.new_branch_prefix}{repo_name}/{latest_tag}"
 
             # Check if the remote branch already exists
             if branch_name in branches:
