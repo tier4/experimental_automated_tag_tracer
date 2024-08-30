@@ -3,7 +3,7 @@ import re
 import argparse
 import logging
 
-import yaml
+from ruamel.yaml import YAML
 from packaging import version
 import git
 import github
@@ -53,8 +53,14 @@ class AutowareRepos:
     """
     def __init__(self, autoware_repos_file_name: str):
         self.autoware_repos_file_name: str = autoware_repos_file_name
+
+        yaml = YAML()
+
+        # Keep comments in the file
+        yaml.preserve_quotes = True
+
         with open(self.autoware_repos_file_name, "r") as file:
-            self.autoware_repos = yaml.safe_load(file)
+            self.autoware_repos = yaml.load(file)
 
     def _parse_repos(self) -> dict[str, str]:
         """
