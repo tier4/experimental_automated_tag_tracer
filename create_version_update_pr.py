@@ -54,13 +54,13 @@ class AutowareRepos:
     def __init__(self, autoware_repos_file_name: str):
         self.autoware_repos_file_name: str = autoware_repos_file_name
 
-        yaml = YAML()
+        self.yaml = YAML()
 
         # Keep comments in the file
-        yaml.preserve_quotes = True
+        self.yaml.preserve_quotes = True
 
         with open(self.autoware_repos_file_name, "r") as file:
-            self.autoware_repos = yaml.load(file)
+            self.autoware_repos = self.yaml.load(file)
 
     def _parse_repos(self) -> dict[str, str]:
         """
@@ -110,7 +110,7 @@ class AutowareRepos:
         self.autoware_repos["repositories"][target_repository_relative_path]["version"] = new_version
 
         with open(self.autoware_repos_file_name, "w") as file:
-            yaml.safe_dump(self.autoware_repos, file)
+            self.yaml.dump(self.autoware_repos, file)
 
 
 class GitHubInterface:
